@@ -1,0 +1,38 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+# Built application files
+*.ap_
+*.apk
+
+# Generated files
+bin/
+gen/
+
+# Intellij IDEA
+*.ipr
+*.iws
+.idea/
+out/
+.d
+
+# Android Studio and Gradle specific entries
+.navigation
+build
+# Mac .DS_Store files
+
+# NDK
+obj/
+ss.si4project
