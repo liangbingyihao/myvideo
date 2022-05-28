@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">myvideo</string>
+    <string name="loading_video">Loading video…</string>
 </resources>

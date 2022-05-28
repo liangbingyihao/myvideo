@@ -1,12 +1,16 @@
 package com.example.myvideo;
 
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 
 import android.text.TextUtils;
 import android.webkit.WebResourceRequest;
+
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Handler;
@@ -18,12 +22,22 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
+import android.widget.Toast;
+
+import com.example.myvideo.subtitle.Subtitle;
+import com.example.myvideo.subtitle.SubtitleList;
+import com.example.myvideo.utils.ClipBoardUtil;
+import com.example.myvideo.utils.OkHttpUtils;
+import com.example.myvideo.utils.ResultCallback;
+
+import okhttp3.Request;
 
 public class MainActivity extends AppCompatActivity {
     private WebView mWebView;
     private static String TAG = "MainActivity";
     Handler jsHandler;
     Runnable jsRun = new Runnable() {
+        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
         @Override
         public void run() {
             jsHandler.postDelayed(this, 2000);
@@ -46,23 +60,60 @@ public class MainActivity extends AppCompatActivity {
 
         mWebView.setWebViewClient(new MyWebViewClient());
         mWebView.setWebChromeClient(new MyChrome());    // here
-        WebSettings webSettings = mWebView.getSettings();
-        webSettings.setJavaScriptEnabled(true);
-        webSettings.setAllowFileAccess(true);
-        webSettings.setAppCacheEnabled(true);
+        WebSettings settings = mWebView.getSettings();
+        settings.setUseWideViewPort(true); // 关键点
+        settings.setAllowFileAccess(true); // 允许访问文件
+        settings.setSupportZoom(true); // 支持缩放
+        settings.setLoadWithOverviewMode(true);
+        settings.setJavaScriptEnabled(true);
 
-        if (savedInstanceState == null) {
-            mWebView.loadUrl("https://www.bilibili.com/video/BV1oE411M7YW?t=22");
-        }
+//        if (savedInstanceState == null) {
+//            mWebView.loadUrl("https://www.bilibili.com/video/BV1oE411M7YW?t=22");
+//        }
         jsHandler = new Handler(getMainLooper());
+    }
+
+    private Runnable mClipRunnable = new Runnable() {
+        @Override
+        public void run() {
+            //把获取到的内容打印出来
+            String url = ClipBoardUtil.paste();
+            ClipBoardUtil.clear();
+            if (!TextUtils.isEmpty(url)) {
+                int start = url.indexOf("http");
+                if(start>=0){
+                    url = url.substring(start);
+                    Toast.makeText(MainActivity.this, url, Toast.LENGTH_SHORT).show();
+                    mWebView.loadUrl(url);
+                }
+            }
+        }
+    };
+
+    //获取剪切板内容
+    private void getClipboardData() {
+        this.getWindow().getDecorView().post(mClipRunnable);
     }
 
     private static class MyWebViewClient extends WebViewClient {
         @Override
         public void onLoadResource(WebView view,
-                String url) {
+                                   String url) {
             if (url.endsWith("json")) {
                 Log.d(TAG, "onLoadResource: " + url);
+                OkHttpUtils.getInstace().doGet(url, new ResultCallback<SubtitleList>() {
+                    @Override
+                    public void onError(Request request, Exception e) {
+
+                    }
+
+                    @Override
+                    public void onResponse(SubtitleList response) {
+                        for (Subtitle s : response.body) {
+                            Log.d(TAG, s.content);
+                        }
+                    }
+                });
             }
             super.onLoadResource(view, url);
         }
@@ -70,12 +121,13 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             Log.d(TAG, "shouldOverrideUrlLoading: " + url);
-            return super.shouldOverrideUrlLoading(view, url);
+            view.loadUrl(url);
+            return true;
         }
 
         @Override
         public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-            Log.d(TAG, "shouldOverrideUrlLoading2: " + request.getUrl().toString());
+//            Log.d(TAG, "shouldOverrideUrlLoading2: " + request.getUrl().toString());
             return super.shouldOverrideUrlLoading(view, request);
         }
     }
@@ -108,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         public void onShowCustomView(View paramView,
-                WebChromeClient.CustomViewCallback paramCustomViewCallback) {
+                                     WebChromeClient.CustomViewCallback paramCustomViewCallback) {
             if (this.mCustomView != null) {
                 onHideCustomView();
                 return;
@@ -124,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     @Override
     protected void onPause() {
         super.onPause();
@@ -133,6 +186,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        getClipboardData();
         jsHandler.postDelayed(jsRun, 2000);
     }
 }
