@@ -219,7 +219,7 @@ public class VideoEnabledWebChromeClient extends WebChromeClient implements Medi
     }
 
     @Override
-    public View getVideoLoadingProgressView() // Video will start loading
+    public View getVideoLoadingProgressView() // BiliVideo will start loading
     {
         if (loadingView != null)
         {
@@ -233,7 +233,7 @@ public class VideoEnabledWebChromeClient extends WebChromeClient implements Medi
     }
 
     @Override
-    public void onPrepared(MediaPlayer mp) // Video will start playing, only called in the case of android.widget.VideoView (typically API level <11)
+    public void onPrepared(MediaPlayer mp) // BiliVideo will start playing, only called in the case of android.widget.VideoView (typically API level <11)
     {
         if (loadingView != null)
         {
@@ -242,7 +242,7 @@ public class VideoEnabledWebChromeClient extends WebChromeClient implements Medi
     }
 
     @Override
-    public void onCompletion(MediaPlayer mp) // Video finished playing, only called in the case of android.widget.VideoView (typically API level <11)
+    public void onCompletion(MediaPlayer mp) // BiliVideo finished playing, only called in the case of android.widget.VideoView (typically API level <11)
     {
         onHideCustomView();
     }

@@ -1,9 +1,7 @@
 package com.example.myvideo;
 
-import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 
@@ -24,8 +22,8 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.Toast;
 
-import com.example.myvideo.subtitle.Subtitle;
-import com.example.myvideo.subtitle.SubtitleList;
+import com.example.myvideo.model.Subtitle;
+import com.example.myvideo.model.SubtitleList;
 import com.example.myvideo.utils.ClipBoardUtil;
 import com.example.myvideo.utils.OkHttpUtils;
 import com.example.myvideo.utils.ResultCallback;
