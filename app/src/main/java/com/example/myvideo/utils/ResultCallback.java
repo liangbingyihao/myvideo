@@ -10,8 +10,14 @@ import okhttp3.Request;
 public abstract class ResultCallback<T> {
     //这是请求数据的返回类型，包含常见的（Bean，List等）
     Type mType;
+    boolean ui=true;
 
     public ResultCallback() {
+        mType = getSuperclassTypeParameter(getClass());
+    }
+
+    public ResultCallback(boolean ui) {
+        this.ui = ui;
         mType = getSuperclassTypeParameter(getClass());
     }
 
@@ -50,7 +56,9 @@ public abstract class ResultCallback<T> {
      * @param request
      * @param e
      */
-    public abstract void onError(Request request, Exception e);
+    public  void onError(Request request, Exception e){
+
+    };
 
     /**
      * @param response

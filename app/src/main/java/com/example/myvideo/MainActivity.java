@@ -108,7 +108,7 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(SubtitleList response) {
                         for (Subtitle s : response.body) {
-                            Log.d(TAG, s.content);
+                            Log.d(TAG, s.getDetail());
                         }
                     }
                 });

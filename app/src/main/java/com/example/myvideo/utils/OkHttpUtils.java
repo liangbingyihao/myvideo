@@ -97,12 +97,16 @@ public class OkHttpUtils {
             // 必须想办法把数据供给主线程使用，所以引用了自定义的回调接口
             @Override
             public void onFailure(final Call call, final IOException e) {
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        callback.onError(request, e);
-                    }
-                });
+                if (callback.ui) {
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            callback.onError(request, e);
+                        }
+                    });
+                } else {
+                    callback.onError(request, e);
+                }
             }
 
             @Override
@@ -111,20 +115,28 @@ public class OkHttpUtils {
                     //返回数据成功的话就解析json串
                     String json = response.body().string();
                     final Object o = gson.fromJson(json, callback.mType);//将json解析成对应的bean
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            //将response返回给主线程
-                            callback.onResponse(o);
-                        }
-                    });
+                    if (callback.ui) {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                //将response返回给主线程
+                                callback.onResponse(o);
+                            }
+                        });
+                    } else {
+                        callback.onResponse(o);
+                    }
                 } else {
-                    handler.post(new Runnable() {
-                        @Override
-                        public void run() {
-                            callback.onError(request, null);
-                        }
-                    });
+                    if (callback.ui) {
+                        handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                callback.onError(request, null);
+                            }
+                        });
+                    } else {
+                        callback.onError(request, null);
+                    }
                 }
             }
         });

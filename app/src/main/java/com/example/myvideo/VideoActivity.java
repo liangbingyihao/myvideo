@@ -21,12 +21,16 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+import androidx.webkit.WebViewAssetLoader;
 
 import com.example.myvideo.model.BiliVideo;
 import com.example.myvideo.model.Subtitle;
 import com.example.myvideo.model.SubtitleList;
+import com.example.myvideo.utils.Constants;
+import com.example.myvideo.utils.LocalContentWebViewClient;
 import com.example.myvideo.utils.OkHttpUtils;
 import com.example.myvideo.utils.ResultCallback;
+import com.example.myvideo.utils.SubtitleService;
 import com.example.myvideo.utils.Utils;
 import com.example.myvideo.utils.VideoEnabledWebChromeClient;
 import com.example.myvideo.utils.VideoEnabledWebView;
@@ -46,30 +50,36 @@ public class VideoActivity extends Activity {
     private final int MSG_TIME = 0;
     private String subTitle;
     private TextView subTitleView;
+    private String videoJs;
+    private String playerTimeJs="";
+    private ValueCallback<String> mPlayerTime = new ValueCallback<String>() {
+        @Override
+        public void onReceiveValue(String s) {
+            s = s.replace("\"", "");
+            boolean isMatch = Pattern.matches(".*\\d{1,2}:\\d{1,2}.*", s);
+            if(subtitleList!=null){
+                Log.d(TAG, String.format("From JS:%s,%b",s,isMatch)); // NEVER LOGGED on API 19-21
+            }
+            if (!isMatch) {
+                return;
+            }
+            Message msg = Message.obtain();
+            msg.what = MSG_TIME;
+            msg.arg1 = Utils.timeStr2Seconds(s.replace("\"", ""));
+            subtitleHandler.removeMessages(MSG_TIME);
+            subtitleHandler.sendMessage(msg);
+        }
+    };
 
     Runnable jsRun = new Runnable() {
         @RequiresApi(api = Build.VERSION_CODES.KITKAT)
         @Override
         public void run() {
             jsHandler.postDelayed(this, 2000);
-            webView.evaluateJavascript(
-                    "(function(){return document.getElementsByClassName('mplayer-control-text mplayer-time-current-text')[0].innerHTML})()",
-                    new ValueCallback<String>() {
-                        @Override
-                        public void onReceiveValue(String s) {
-                            s = s.replace("\"", "");
-                            Log.d(TAG, "From JS: " + s); // NEVER LOGGED on API 19-21
-                            boolean isMatch = Pattern.matches(".*\\d{2}:\\d{2}.*", s);
-                            if (!isMatch) {
-                                return;
-                            }
-                            Message msg = Message.obtain();
-                            msg.what = MSG_TIME;
-                            msg.arg1 = Utils.timeStr2Seconds(s.replace("\"", ""));
-                            subtitleHandler.removeMessages(MSG_TIME);
-                            subtitleHandler.sendMessage(msg);
-                        }
-                    });
+            if (!TextUtils.isEmpty(playerTimeJs)) {
+//                Log.d(TAG, playerTimeJs);
+                webView.evaluateJavascript(playerTimeJs, mPlayerTime);
+            }
         }
     };
     Runnable subTitleRun = new Runnable() {
@@ -133,11 +143,18 @@ public class VideoActivity extends Activity {
         jsHandler = new Handler(getMainLooper());
         webView.setWebChromeClient(webChromeClient);
         // Call private class InsideWebViewClient
+//        final WebViewAssetLoader assetLoader = new WebViewAssetLoader.Builder()
+//                .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+//                .addPathHandler("/res/", new WebViewAssetLoader.ResourcesPathHandler(this))
+//                .build();
         webView.setWebViewClient(new InsideWebViewClient());
 
         // Navigate anywhere you want, but consider that this classes have only been tested on YouTube's mobile site
 //        webView.loadUrl("https://www.bilibili.com/video/BV1U7411a7xG");
-        webView.loadUrl("https://www.bilibili.com/video/BV1TJ41117P4");
+        webView.loadUrl("https://m.youtube.com/watch?v=tZ2P0b-UT_I");
+//        webView.loadUrl("https://www.bilibili.com/video/BV1TJ41117P4");
+//        webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
+
         subtitleThread = new HandlerThread("SubtitleThread");
         subtitleThread.start();
         subtitleHandler = new Handler(subtitleThread.getLooper()) {
@@ -149,6 +166,7 @@ public class VideoActivity extends Activity {
                         if (subtitleList != null) {
                             for (Subtitle s : subtitleList.body) {
                                 if (s.from < second && s.to > second) {
+                                    Log.d(TAG, String.format("set subtitle:%f,%f,%d,%s,",s.from,s.to,second,s.content)); // NEVER LOGGED on API 19-21
                                     jsHandler.removeCallbacks(subTitleRun);
                                     subTitle = s.content;
                                     jsHandler.post(subTitleRun);
@@ -162,50 +180,52 @@ public class VideoActivity extends Activity {
                 }
             }
         };
-
+        videoJs = Utils.getAssetsData(this, "video.js");
     }
 
+    private ResultCallback<SubtitleList> subtitleListCallback = new ResultCallback<SubtitleList>(false) {
+
+        @Override
+        public void onError(Request request, Exception e) {
+            subtitleList = null;
+            playerTimeJs = null;
+        }
+
+        @Override
+        public void onResponse(SubtitleList response) {
+            if (response != null) {
+                subtitleList = response;
+                for (Subtitle s : subtitleList.body) {
+                    Log.d(TAG, s.getDetail());
+                }
+            }
+        }
+    };
+
+//    private ResultCallback<BiliVideo> biliVideoCallback = new ResultCallback<BiliVideo>() {
+//
+//        @Override
+//        public void onResponse(BiliVideo response) {
+//            if (response != null) {
+//                String enSubtitle = response.getSubtitle("en");
+//                if (!TextUtils.isEmpty(enSubtitle)) {
+//                    OkHttpUtils.getInstace().doGet(enSubtitle, subtitleListCallback);
+//                }
+//            }
+//
+//        }
+//    };
+
     private class InsideWebViewClient extends WebViewClient {
+
         @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
         @Nullable
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
-            if (request.getUrl().toString().indexOf("api.bilibili.com/x/player/v2") > 0) {
-                Log.d(TAG, "shouldInterceptRequest:" + request.getUrl().toString());
-                subtitleList = null;
-                OkHttpUtils.getInstace().doGet(request.getUrl().toString(), new ResultCallback<BiliVideo>() {
-
-                    @Override
-                    public void onError(Request request, Exception e) {
-
-                    }
-
-                    @Override
-                    public void onResponse(BiliVideo response) {
-                        if (response != null) {
-                            String enSubtitle = response.getSubtitle("en");
-                            if (!TextUtils.isEmpty(enSubtitle)) {
-                                OkHttpUtils.getInstace().doGet(enSubtitle, new ResultCallback<SubtitleList>() {
-                                    @Override
-                                    public void onError(Request request, Exception e) {
-
-                                    }
-
-                                    @Override
-                                    public void onResponse(SubtitleList response) {
-                                        if (response != null) {
-                                            subtitleList = response;
-                                            for (Subtitle s : subtitleList.body) {
-                                                Log.d(TAG, s.content);
-                                            }
-                                        }
-                                    }
-                                });
-                            }
-                        }
-
-                    }
-                });
+            int subtitleType = SubtitleService.getSubtitleFromUrl(request.getUrl().toString(), subtitleListCallback);
+            String js = SubtitleService.getPlayTimeJS(subtitleType);
+            if (!TextUtils.isEmpty(js)) {
+                playerTimeJs = js;
             }
             return super.shouldInterceptRequest(view, request);
         }
@@ -215,36 +235,16 @@ public class VideoActivity extends Activity {
         // Thanks http://stackoverflow.com/a/33681975/1815624
         public boolean shouldOverrideUrlLoading(WebView view, String url) {
             view.loadUrl(url);
-//            Pattern p = Pattern.compile(".*bilibili.com/video/([^\\?]+)*");
-//            Matcher m = p.matcher(url);
-//            Log.d(TAG, "shouldOverrideUrlLoading:"+url);
-//            if(m.matches()){
-////                System.out.println(m.group(1));
-//                Log.d(TAG, "shouldOverrideUrlLoading:"+m.group(1));
-//            }
             return true;
         }
 
-//        @Override
-//        public void onLoadResource(WebView view,
-//                                   String url) {
-//            if (url.endsWith("json")) {
-//                OkHttpUtils.getInstace().doGet(url, new ResultCallback<SubtitleList>() {
-//                    @Override
-//                    public void onError(Request request, Exception e) {
-//
-//                    }
-//
-//                    @Override
-//                    public void onResponse(SubtitleList response) {
-//                        if (response != null) {
-//                            subtitleList = response;
-//                        }
-//                    }
-//                });
-//            }
-//            super.onLoadResource(view, url);
-//        }
+        @Override
+        public void onPageFinished(WebView view, String url) {
+            super.onPageFinished(view, url);
+//            view.loadUrl("file:///android_asset/video.js");
+//            view.loadUrl("javascript:console.log(finish:" + url + ");");
+            view.loadUrl("javascript:" + VideoActivity.this.videoJs);
+        }
     }
 
     @Override
