@@ -151,9 +151,9 @@ public class VideoActivity extends Activity {
 
         // Navigate anywhere you want, but consider that this classes have only been tested on YouTube's mobile site
 //        webView.loadUrl("https://www.bilibili.com/video/BV1U7411a7xG");
-        webView.loadUrl("https://m.youtube.com/watch?v=tZ2P0b-UT_I");
-//        webView.loadUrl("https://www.bilibili.com/video/BV1TJ41117P4");
-//        webView.loadUrl("https://appassets.androidplatform.net/assets/index.html");
+//        webView.loadUrl("https://m.youtube.com/watch?v=tZ2P0b-UT_I");
+//        webView.loadUrl("https://www.youtube.com/watch?v=r6sGWTCMz2k");
+        webView.loadUrl("file:///android_asset/index.html");
 
         subtitleThread = new HandlerThread("SubtitleThread");
         subtitleThread.start();
@@ -165,11 +165,13 @@ public class VideoActivity extends Activity {
                         int second = msg.arg1;
                         if (subtitleList != null) {
                             for (Subtitle s : subtitleList.body) {
-                                if (s.from < second && s.to > second) {
-                                    Log.d(TAG, String.format("set subtitle:%f,%f,%d,%s,",s.from,s.to,second,s.content)); // NEVER LOGGED on API 19-21
+                                if (s.from < second && s.to > second) { // NEVER LOGGED on API 19-21
                                     jsHandler.removeCallbacks(subTitleRun);
-                                    subTitle = s.content;
-                                    jsHandler.post(subTitleRun);
+                                    if(!s.content.equals(subTitle)){
+                                        Log.d(TAG, String.format("set subtitle:%f,%f,%d,%s,",s.from,s.to,second,s.content));
+                                        subTitle = s.content;
+                                        jsHandler.post(subTitleRun);
+                                    }
                                     break;
                                 }
                             }
