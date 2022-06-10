@@ -4,11 +4,11 @@ plugins {
 
 android {
     compileSdkVersion 29
-//    buildToolsVersion "30.0.2"
+    //    buildToolsVersion "30.0.2"
 
     defaultConfig {
         applicationId "com.example.myvideo"
-        minSdkVersion 16
+        minSdkVersion 17
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
