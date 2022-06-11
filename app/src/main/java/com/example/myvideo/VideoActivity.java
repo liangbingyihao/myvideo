@@ -8,6 +8,7 @@ import android.os.HandlerThread;
 import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -21,19 +22,14 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.webkit.WebViewAssetLoader;
-
-import com.example.myvideo.model.BiliVideo;
 import com.example.myvideo.model.Subtitle;
 import com.example.myvideo.model.SubtitleList;
-import com.example.myvideo.utils.Constants;
-import com.example.myvideo.utils.LocalContentWebViewClient;
-import com.example.myvideo.utils.OkHttpUtils;
 import com.example.myvideo.utils.ResultCallback;
 import com.example.myvideo.utils.SubtitleService;
 import com.example.myvideo.utils.Utils;
 import com.example.myvideo.utils.VideoEnabledWebChromeClient;
 import com.example.myvideo.utils.VideoEnabledWebView;
+import com.lzf.easyfloat.EasyFloat;
 
 import java.util.regex.Pattern;
 
@@ -274,5 +270,56 @@ public class VideoActivity extends Activity {
         super.onResume();
 //        getClipboardData();
         jsHandler.postDelayed(jsRun, 2000);
+    }
+
+
+    private void showAppFloat2() {
+        //EasyFloat.with(this)
+        //        .setTag(TAG)
+        //        .setLayout(R.layout.float_custom, view ->
+        //                view.findViewById(R.id.textView).setOnClickListener(v1 -> toast("onClick")))
+        //        .setGravity(Gravity.END, 0, 100)
+        //        // 在Java中使用Kotlin DSL回调
+        //        .registerCallback(builder -> {
+        //            builder.createResult((aBoolean, s, view) -> {
+        //                toast("createResult：" + aBoolean.toString());
+        //                return null;
+        //            });
+        //
+        //            builder.dismiss(() -> {
+        //                toast("dismiss");
+        //                return null;
+        //            });
+        //
+        //            // ...可根据需求复写其他方法
+        //
+        //            return null;
+        //        })
+        //        .show();
+        //EasyFloat.with(this.applicationContext)
+        //        .setTag(tag)
+        //        .setShowPattern(ShowPattern.FOREGROUND)
+        //        .setLocation(100, 100)
+        //        .setAnimator(null)
+        //        .setFilter(SecondActivity::class.java)
+        //    .setLayout(R.layout.float_app_scale) {
+        //    val content = it.findViewById<RelativeLayout>(R.id.rlContent)
+        //            val params = content.layoutParams as FrameLayout.LayoutParams
+        //    it.findViewById<ScaleImage>(R.id.ivScale).onScaledListener =
+        //            object : ScaleImage.OnScaledListener {
+        //        override fun onScaled(x: Float, y: Float, event: MotionEvent) {
+        //            params.width = max(params.width + x.toInt(), 400)
+        //            params.height = max(params.height + y.toInt(), 300)
+        //            // 更新xml根布局的大小
+        //            //                            content.layoutParams = params
+        //            // 更新悬浮窗的大小，可以避免在其他应用横屏时，宽度受限
+        //            EasyFloat.updateFloat(tag, width = params.width, height = params.height)
+        //        }
+        //    }
+        //
+        //    it.findViewById<ImageView>(R.id.ivClose).setOnClickListener {
+        //        EasyFloat.dismiss(tag)
+        //    }
+        //}.show()
     }
 }
