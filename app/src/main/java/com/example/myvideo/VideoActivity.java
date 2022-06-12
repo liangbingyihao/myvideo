@@ -46,6 +46,7 @@ import com.lzf.easyfloat.enums.ShowPattern;
 import com.lzf.easyfloat.interfaces.OnFloatCallbacks;
 import com.lzf.easyfloat.interfaces.OnInvokeView;
 
+import java.util.ArrayList;
 import java.util.regex.Pattern;
 
 import okhttp3.Request;
@@ -60,7 +61,7 @@ public class VideoActivity extends Activity {
     private HandlerThread subtitleThread;
     private Handler subtitleHandler;
     private final int MSG_TIME = 0;
-    private String subTitle;
+    private ArrayList<String> subTitle = new ArrayList<>();
     private TextView subTitleView;
     private String videoJs;
     private String playerTimeJs = "";
@@ -69,9 +70,9 @@ public class VideoActivity extends Activity {
         public void onReceiveValue(String s) {
             s = s.replace("\"", "");
             boolean isMatch = Pattern.matches(".*\\d{1,2}:\\d{1,2}.*", s);
-            if (subtitleList != null) {
+//            if (subtitleList != null) {
 //                Log.d(TAG, String.format("From JS:%s,%b", s, isMatch)); // NEVER LOGGED on API 19-21
-            }
+//            }
             if (!isMatch) {
                 return;
             }
@@ -89,7 +90,6 @@ public class VideoActivity extends Activity {
         public void run() {
             jsHandler.postDelayed(this, 2000);
             if (!TextUtils.isEmpty(playerTimeJs)) {
-//                Log.d(TAG, playerTimeJs);
                 webView.evaluateJavascript(playerTimeJs, mPlayerTime);
             }
         }
@@ -97,7 +97,10 @@ public class VideoActivity extends Activity {
     Runnable subTitleRun = new Runnable() {
         @Override
         public void run() {
-            ClickWordHelper.setText(subTitleView, subTitle);
+            if(subTitle.size()>0){
+                String all = String.join(" ", subTitle.subList(Math.max(0, subTitle.size() - 4), subTitle.size()));
+                ClickWordHelper.setText(subTitleView, all);
+            }
         }
     };
 
@@ -178,9 +181,9 @@ public class VideoActivity extends Activity {
                             for (Subtitle s : subtitleList.body) {
                                 if (s.from < second && s.to > second) { // NEVER LOGGED on API 19-21
                                     jsHandler.removeCallbacks(subTitleRun);
-                                    if (!s.content.equals(subTitle)) {
+                                    if (subTitle.size()==0 || !s.content.equals(subTitle.get(subTitle.size()-1))) {
 //                                        Log.d(TAG, String.format("set subtitle:%f,%f,%d,%s,", s.from, s.to, second, s.content));
-                                        subTitle = s.content;
+                                        subTitle.add(s.content);
                                         jsHandler.post(subTitleRun);
                                     }
                                     break;
@@ -231,63 +234,7 @@ public class VideoActivity extends Activity {
                 EasyFloat.hide(FLOAT_SUBTITLE);
             }
         });
-//        subTitleView = EasyFloat.getFloatView(FLOAT_SUBTITLE).findViewById(R.id.main_content);
-//        jsHandler.postDelayed(mHideFloat, 50);
     }
-
-//    private void setOnClickSubtitle(TextView v) {
-//        subTitleView = v;
-//        subTitleView.setOnClickListener(onSubtitleClick);
-//        subTitleView.setOnLongClickListener(onSubtitleLongClick);
-//        SpannableStringBuilder s = new SpannableStringBuilder(subTitleView.getText());
-//        for (int i = 0; i < s.length(); i++) {
-//            s.setSpan(new ClickableSpan() {
-//                @Override
-//                public void onClick(View v) {
-//                }
-//
-//                @Override
-//                public void updateDrawState(TextPaint ds) {
-//                    super.updateDrawState(ds);
-//                    ds.setColor(0xff000000);       //设置文件颜色
-//                    ds.setUnderlineText(false);      //设置下划线
-//                }
-//            }, i, i + 1, Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
-//        }
-//        subTitleView.setText(s, TextView.BufferType.SPANNABLE);
-//        subTitleView.setMovementMethod(LinkMovementMethod.getInstance());
-//        subTitleView.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                //若没有绑定clickableSpan，无法使用subSequence方法
-//                //若tv.getSelectionStart()-1,则输出点击的文字以及其上一个文字
-//                //若tv.getSelectionEnd()+1,则输出点击的文字以及其下一个文字，如此类推
-//                //通过标点判断还可截取一段文字中我们所点击的那句话
-//                TextView tv = (TextView) v;
-//                String s = tv
-//                        .getText()
-//                        .subSequence(tv.getSelectionStart(),
-//                                tv.getSelectionEnd()).toString();
-//                Log.d("tapped on:", s);
-//            }
-//        });
-//    }
-//
-//    private View.OnClickListener onSubtitleClick = new View.OnClickListener() {
-//        @Override
-//        public void onClick(View view) {
-//            Log.d(TAG, "onSubtitleClick");
-//        }
-//
-//    };
-//    private View.OnLongClickListener onSubtitleLongClick = new View.OnLongClickListener() {
-//        @Override
-//        public boolean onLongClick(View view) {
-//            Log.d(TAG, "onSubtitleLongClick");
-//            return false;
-//        }
-//
-//    };
 
     private Runnable mHideFloat = new Runnable() {
         @Override
@@ -329,6 +276,7 @@ public class VideoActivity extends Activity {
             String js = SubtitleService.getPlayTimeJS(subtitleType);
             if (!TextUtils.isEmpty(js)) {
                 playerTimeJs = js;
+                subTitle.clear();
                 Log.d(TAG, Thread.currentThread().getName() + " HIDE...");
                 jsHandler.post(mHideFloat);
 //                EasyFloat.hide(FLOAT_SUBTITLE);
@@ -376,7 +324,6 @@ public class VideoActivity extends Activity {
     @Override
     protected void onResume() {
         super.onResume();
-//        getClipboardData();
         jsHandler.postDelayed(jsRun, 2000);
     }
 }

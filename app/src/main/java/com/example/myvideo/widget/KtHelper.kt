@@ -35,8 +35,8 @@ fun registerActivityFloat(
         .setShowPattern(ShowPattern.CURRENT_ACTIVITY)
         .setMatchParent(widthMatch = true, heightMatch = false)
 //        .setSidePattern(SidePattern.RESULT_HORIZONTAL)
-//        .setLocation(10, screenHeight/2)
-        .setGravity(Gravity.CENTER_HORIZONTAL, 0, dm.heightPixels/2)
+        .setLocation(10, screenHeight/2)
+//        .setGravity(Gravity.CENTER_HORIZONTAL, 0, dm.heightPixels/2)
         .setAnimator(DefaultAnimator())
         .setLayout(R.layout.float_subtitle) {
             val content = it.findViewById<RelativeLayout>(R.id.rlContent)

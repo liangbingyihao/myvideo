@@ -42,11 +42,15 @@ public class ClickWordHelper {
             @Override
             public void onClick(View widget) {
                 TextView tv = (TextView) widget;
-                String s = tv
-                        .getText()
-                        .subSequence(tv.getSelectionStart(),
-                                tv.getSelectionEnd()).toString();
-                Log.d(TAG, s);
+                try {
+                    String s = tv
+                            .getText()
+                            .subSequence(tv.getSelectionStart(),
+                                    tv.getSelectionEnd()).toString();
+                    Log.d(TAG, s);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
 
             @Override
