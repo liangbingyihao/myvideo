@@ -1,190 +1,190 @@
 package com.example.myvideo;
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Build;
+import android.graphics.Color;
 import android.os.Bundle;
 
-import android.text.TextUtils;
-import android.webkit.WebResourceRequest;
-
-import androidx.annotation.RequiresApi;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.TextPaint;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.view.ActionMode;
+import android.view.Menu;
+import android.view.MenuItem;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.webkit.ValueCallback;
-import android.webkit.WebChromeClient;
-import android.webkit.WebSettings;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.FrameLayout;
-import android.widget.Toast;
+import android.widget.TextView;
 
-import com.example.myvideo.model.Subtitle;
-import com.example.myvideo.model.SubtitleList;
-import com.example.myvideo.utils.ClipBoardUtil;
-import com.example.myvideo.utils.OkHttpUtils;
-import com.example.myvideo.utils.ResultCallback;
-
-import okhttp3.Request;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    private WebView mWebView;
     private static String TAG = "MainActivity";
-    Handler jsHandler;
-    Runnable jsRun = new Runnable() {
-        @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-        @Override
-        public void run() {
-            jsHandler.postDelayed(this, 2000);
-            mWebView.evaluateJavascript(
-                    "(function(){return document.getElementsByClassName('mplayer-control-text mplayer-time-current-text')[0].innerHTML})()",
-                    new ValueCallback<String>() {
-                        @Override
-                        public void onReceiveValue(String s) {
-                            Log.d(TAG, "From JS: " + s); // NEVER LOGGED on API 19-21
-                        }
-                    });
-        }
-    };
+    private TextView subTitleView;
+    private final int DEFINITION = 100;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mWebView = (WebView) findViewById(R.id.webView);
-
-        mWebView.setWebViewClient(new MyWebViewClient());
-        mWebView.setWebChromeClient(new MyChrome());    // here
-        WebSettings settings = mWebView.getSettings();
-        settings.setUseWideViewPort(true); // 关键点
-        settings.setAllowFileAccess(true); // 允许访问文件
-        settings.setSupportZoom(true); // 支持缩放
-        settings.setLoadWithOverviewMode(true);
-        settings.setJavaScriptEnabled(true);
-
-//        if (savedInstanceState == null) {
-//            mWebView.loadUrl("https://www.bilibili.com/video/BV1oE411M7YW?t=22");
-//        }
-        jsHandler = new Handler(getMainLooper());
+        setSubTitleView3(findViewById(R.id.main_content));
+    }
+    public void setSubTitleView3(TextView textView){
+        String text = "Discover the latest features and updates that push boundaries of messaging, entertainment and accessibility, making your world even more connected.";
+        textView.setText(text, TextView.BufferType.SPANNABLE);
+        textView.setMovementMethod(LinkMovementMethod.getInstance());
+        getEachWord(textView);
     }
 
-    private Runnable mClipRunnable = new Runnable() {
-        @Override
-        public void run() {
-            //把获取到的内容打印出来
-            String url = ClipBoardUtil.paste();
-            ClipBoardUtil.clear();
-            if (!TextUtils.isEmpty(url)) {
-                int start = url.indexOf("http");
-                if(start>=0){
-                    url = url.substring(start);
-                    Toast.makeText(MainActivity.this, url, Toast.LENGTH_SHORT).show();
-                    mWebView.loadUrl(url);
+    public void getEachWord(TextView textView){
+        Spannable spans = (Spannable)textView.getText();
+        Integer[] indices = getIndices(
+                textView.getText().toString().trim(), ' ');
+        int start = 0;
+        int end = 0;
+        // to cater last/only word loop will run equal to the length of indices.length
+        for (int i = 0; i <= indices.length; i++) {
+            ClickableSpan clickSpan = getClickableSpan();
+            // to cater last/only word
+            end = (i < indices.length ? indices[i] : spans.length());
+            spans.setSpan(clickSpan, start, end,
+                    Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+            start = end + 1;
+        }
+        //改变选中文本的高亮颜色
+        textView.setHighlightColor(Color.CYAN);
+    }
+
+    private ClickableSpan getClickableSpan(){
+        return new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                TextView tv = (TextView) widget;
+                String s = tv
+                        .getText()
+                        .subSequence(tv.getSelectionStart(),
+                                tv.getSelectionEnd()).toString();
+                Log.d(TAG, s);
+            }
+            @Override
+            public void updateDrawState(TextPaint ds) {
+                ds.setColor(Color.BLACK);
+                ds.setUnderlineText(false);
+            }
+        };
+    }
+
+    public static Integer[] getIndices(String s, char c) {
+        int pos = s.indexOf(c, 0);
+        List<Integer> indices = new ArrayList<Integer>();
+        while (pos != -1) {
+            indices.add(pos);
+            pos = s.indexOf(c, pos + 1);
+        }
+        return (Integer[]) indices.toArray(new Integer[0]);
+    }
+
+
+
+    private void setOnClickSubtitle(TextView v) {
+        subTitleView = v;
+        SpannableStringBuilder s = new SpannableStringBuilder(subTitleView.getText());
+        for (int i = 0; i < s.length(); i++) {
+            s.setSpan(new ClickableSpan() {
+                @Override
+                public void onClick(View v) {
                 }
-            }
-        }
-    };
 
-    //获取剪切板内容
-    private void getClipboardData() {
-        this.getWindow().getDecorView().post(mClipRunnable);
+                @Override
+                public void updateDrawState(TextPaint ds) {
+                    super.updateDrawState(ds);
+                    ds.setColor(0xff000000);       //设置文件颜色
+                    ds.setUnderlineText(false);      //设置下划线
+                }
+            }, i, Math.min(i + 5,s.length()), Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+        }
+        subTitleView.setText(s, TextView.BufferType.SPANNABLE);
+        subTitleView.setMovementMethod(LinkMovementMethod.getInstance());
+        subTitleView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //若没有绑定clickableSpan，无法使用subSequence方法
+                //若tv.getSelectionStart()-1,则输出点击的文字以及其上一个文字
+                //若tv.getSelectionEnd()+1,则输出点击的文字以及其下一个文字，如此类推
+                //通过标点判断还可截取一段文字中我们所点击的那句话
+                TextView tv = (TextView) v;
+//                String total = tv.getText().toString();
+                int start = tv.getSelectionStart();
+                int end = tv.getSelectionEnd();
+                String s = tv.getText().subSequence(start,end+10).toString();
+//                String s = tv
+//                        .getText()
+//                        .subSequence(tv.getSelectionStart(),
+//                                tv.getSelectionEnd()).toString();
+                Log.d(TAG, s);
+            }
+        });
     }
 
-    private static class MyWebViewClient extends WebViewClient {
-        @Override
-        public void onLoadResource(WebView view,
-                                   String url) {
-            if (url.endsWith("json")) {
-                Log.d(TAG, "onLoadResource: " + url);
-                OkHttpUtils.getInstace().doGet(url, new ResultCallback<SubtitleList>() {
-                    @Override
-                    public void onError(Request request, Exception e) {
+    void setOnClickSubtitle2(TextView v){
+        subTitleView = v;
+        subTitleView.setCustomSelectionActionModeCallback(new ActionMode.Callback() {
 
-                    }
+            @Override
+            public boolean onPrepareActionMode(ActionMode mode, Menu menu) {
+                // Remove the "select all" option
+                menu.removeItem(android.R.id.selectAll);
+                // Remove the "cut" option
+                menu.removeItem(android.R.id.cut);
+                // Remove the "copy all" option
+                menu.removeItem(android.R.id.copy);
+                return true;
+            }
 
-                    @Override
-                    public void onResponse(SubtitleList response) {
-                        for (Subtitle s : response.body) {
-                            Log.d(TAG, s.getDetail());
+            @Override
+            public boolean onCreateActionMode(ActionMode mode, Menu menu) {
+                // Called when action mode is first created. The menu supplied
+                // will be used to generate action buttons for the action mode
+
+                // Here is an example MenuItem
+                menu.add(0, DEFINITION, 0, "Definition").setIcon(R.drawable.ic_close_circle);
+                return true;
+            }
+
+            @Override
+            public void onDestroyActionMode(ActionMode mode) {
+                // Called when an action mode is about to be exited and
+                // destroyed
+            }
+
+            @Override
+            public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
+                switch (item.getItemId()) {
+                    case DEFINITION:
+                        int min = 0;
+                        int max = subTitleView.getText().length();
+                        if (subTitleView.isFocused()) {
+                            final int selStart = subTitleView.getSelectionStart();
+                            final int selEnd = subTitleView.getSelectionEnd();
+
+                            min = Math.max(0, Math.min(selStart, selEnd));
+                            max = Math.max(0, Math.max(selStart, selEnd));
                         }
-                    }
-                });
+                        // Perform your definition lookup with the selected text
+                        final CharSequence selectedText = subTitleView.getText().subSequence(min, max);
+                        // Finish and close the ActionMode
+                        mode.finish();
+                        return true;
+                    default:
+                        break;
+                }
+                return false;
             }
-            super.onLoadResource(view, url);
-        }
 
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, String url) {
-            Log.d(TAG, "shouldOverrideUrlLoading: " + url);
-            view.loadUrl(url);
-            return true;
-        }
-
-        @Override
-        public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-//            Log.d(TAG, "shouldOverrideUrlLoading2: " + request.getUrl().toString());
-            return super.shouldOverrideUrlLoading(view, request);
-        }
+        });
     }
 
-    private class MyChrome extends WebChromeClient {
-
-        private View mCustomView;
-        private WebChromeClient.CustomViewCallback mCustomViewCallback;
-        protected FrameLayout mFullscreenContainer;
-        private int mOriginalOrientation;
-        private int mOriginalSystemUiVisibility;
-
-        MyChrome() {
-        }
-
-        public Bitmap getDefaultVideoPoster() {
-            if (mCustomView == null) {
-                return null;
-            }
-            return BitmapFactory.decodeResource(getApplicationContext().getResources(), 2130837573);
-        }
-
-        public void onHideCustomView() {
-            ((FrameLayout) getWindow().getDecorView()).removeView(this.mCustomView);
-            this.mCustomView = null;
-            getWindow().getDecorView().setSystemUiVisibility(this.mOriginalSystemUiVisibility);
-            setRequestedOrientation(this.mOriginalOrientation);
-            this.mCustomViewCallback.onCustomViewHidden();
-            this.mCustomViewCallback = null;
-        }
-
-        public void onShowCustomView(View paramView,
-                                     WebChromeClient.CustomViewCallback paramCustomViewCallback) {
-            if (this.mCustomView != null) {
-                onHideCustomView();
-                return;
-            }
-            this.mCustomView = paramView;
-            this.mOriginalSystemUiVisibility = getWindow().getDecorView().getSystemUiVisibility();
-            this.mOriginalOrientation = getRequestedOrientation();
-            this.mCustomViewCallback = paramCustomViewCallback;
-            ((FrameLayout) getWindow().getDecorView()).addView(this.mCustomView,
-                    new FrameLayout.LayoutParams(-1, -1));
-            getWindow().getDecorView()
-                    .setSystemUiVisibility(3846 | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-        }
-    }
-
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        jsHandler.removeCallbacks(jsRun);
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        getClipboardData();
-        jsHandler.postDelayed(jsRun, 2000);
-    }
 }

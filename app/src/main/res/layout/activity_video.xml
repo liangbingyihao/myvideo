@@ -36,14 +36,4 @@
 
     </RelativeLayout>
 
-    <TextView
-        android:id="@+id/subtitle"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
-        android:textSize="48px"
-        android:textStyle="bold"
-        android:layout_gravity="bottom"
-        android:gravity="left|center"
-        android:textColor="#ff0000"
-        android:text="123451234512345"/>
 </FrameLayout>

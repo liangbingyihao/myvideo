@@ -6,9 +6,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
+import android.text.SpannableStringBuilder;
+import android.text.Spanned;
+import android.text.TextPaint;
 import android.text.TextUtils;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
 import android.util.Log;
 import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -17,11 +23,14 @@ import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
+
 import com.example.myvideo.model.Subtitle;
 import com.example.myvideo.model.SubtitleList;
 import com.example.myvideo.utils.ResultCallback;
@@ -29,14 +38,21 @@ import com.example.myvideo.utils.SubtitleService;
 import com.example.myvideo.utils.Utils;
 import com.example.myvideo.utils.VideoEnabledWebChromeClient;
 import com.example.myvideo.utils.VideoEnabledWebView;
+import com.example.myvideo.widget.ClickWordHelper;
+import com.example.myvideo.widget.KtHelper;
+import com.example.myvideo.widget.ScaleImage;
 import com.lzf.easyfloat.EasyFloat;
+import com.lzf.easyfloat.enums.ShowPattern;
+import com.lzf.easyfloat.interfaces.OnFloatCallbacks;
+import com.lzf.easyfloat.interfaces.OnInvokeView;
 
 import java.util.regex.Pattern;
 
 import okhttp3.Request;
 
 public class VideoActivity extends Activity {
-    private static String TAG = "VideoActivity";
+    private static final String TAG = "VideoActivity";
+    private static final String FLOAT_SUBTITLE = "SUBTITLE";
     private VideoEnabledWebView webView;
     private VideoEnabledWebChromeClient webChromeClient;
     private Handler jsHandler;
@@ -47,14 +63,14 @@ public class VideoActivity extends Activity {
     private String subTitle;
     private TextView subTitleView;
     private String videoJs;
-    private String playerTimeJs="";
+    private String playerTimeJs = "";
     private ValueCallback<String> mPlayerTime = new ValueCallback<String>() {
         @Override
         public void onReceiveValue(String s) {
             s = s.replace("\"", "");
             boolean isMatch = Pattern.matches(".*\\d{1,2}:\\d{1,2}.*", s);
-            if(subtitleList!=null){
-                Log.d(TAG, String.format("From JS:%s,%b",s,isMatch)); // NEVER LOGGED on API 19-21
+            if (subtitleList != null) {
+//                Log.d(TAG, String.format("From JS:%s,%b", s, isMatch)); // NEVER LOGGED on API 19-21
             }
             if (!isMatch) {
                 return;
@@ -81,7 +97,7 @@ public class VideoActivity extends Activity {
     Runnable subTitleRun = new Runnable() {
         @Override
         public void run() {
-            subTitleView.setText(subTitle);
+            ClickWordHelper.setText(subTitleView, subTitle);
         }
     };
 
@@ -92,7 +108,6 @@ public class VideoActivity extends Activity {
 
         // Save the web view
         webView = (VideoEnabledWebView) findViewById(R.id.webView);
-        subTitleView = findViewById(R.id.subtitle);
 
         // Initialize the VideoEnabledWebChromeClient and set event handlers
         View nonVideoLayout = findViewById(R.id.nonVideoLayout); // Your own view, read class comments
@@ -146,10 +161,10 @@ public class VideoActivity extends Activity {
         webView.setWebViewClient(new InsideWebViewClient());
 
         // Navigate anywhere you want, but consider that this classes have only been tested on YouTube's mobile site
-//        webView.loadUrl("https://www.bilibili.com/video/BV1U7411a7xG");
+        webView.loadUrl("https://www.bilibili.com/video/BV1cZ4y1W7rC");
 //        webView.loadUrl("https://m.youtube.com/watch?v=tZ2P0b-UT_I");
 //        webView.loadUrl("https://www.youtube.com/watch?v=r6sGWTCMz2k");
-        webView.loadUrl("file:///android_asset/index.html");
+//        webView.loadUrl("file:///android_asset/index.html");
 
         subtitleThread = new HandlerThread("SubtitleThread");
         subtitleThread.start();
@@ -163,8 +178,8 @@ public class VideoActivity extends Activity {
                             for (Subtitle s : subtitleList.body) {
                                 if (s.from < second && s.to > second) { // NEVER LOGGED on API 19-21
                                     jsHandler.removeCallbacks(subTitleRun);
-                                    if(!s.content.equals(subTitle)){
-                                        Log.d(TAG, String.format("set subtitle:%f,%f,%d,%s,",s.from,s.to,second,s.content));
+                                    if (!s.content.equals(subTitle)) {
+//                                        Log.d(TAG, String.format("set subtitle:%f,%f,%d,%s,", s.from, s.to, second, s.content));
                                         subTitle = s.content;
                                         jsHandler.post(subTitleRun);
                                     }
@@ -179,40 +194,129 @@ public class VideoActivity extends Activity {
             }
         };
         videoJs = Utils.getAssetsData(this, "video.js");
+        KtHelper.registerActivityFloat(this, FLOAT_SUBTITLE, new OnFloatCallbacks() {
+            @Override
+            public void touchEvent(@NonNull View view, @NonNull MotionEvent motionEvent) {
+
+            }
+
+            @Override
+            public void show(@NonNull View view) {
+
+            }
+
+            @Override
+            public void hide(@NonNull View view) {
+
+            }
+
+            @Override
+            public void dragEnd(@NonNull View view) {
+
+            }
+
+            @Override
+            public void drag(@NonNull View view, @NonNull MotionEvent motionEvent) {
+
+            }
+
+            @Override
+            public void dismiss() {
+
+            }
+
+            @Override
+            public void createdResult(boolean b, @Nullable String s, @Nullable View view) {
+                subTitleView = view.findViewById(R.id.main_content);
+                EasyFloat.hide(FLOAT_SUBTITLE);
+            }
+        });
+//        subTitleView = EasyFloat.getFloatView(FLOAT_SUBTITLE).findViewById(R.id.main_content);
+//        jsHandler.postDelayed(mHideFloat, 50);
     }
 
-    private ResultCallback<SubtitleList> subtitleListCallback = new ResultCallback<SubtitleList>(false) {
+//    private void setOnClickSubtitle(TextView v) {
+//        subTitleView = v;
+//        subTitleView.setOnClickListener(onSubtitleClick);
+//        subTitleView.setOnLongClickListener(onSubtitleLongClick);
+//        SpannableStringBuilder s = new SpannableStringBuilder(subTitleView.getText());
+//        for (int i = 0; i < s.length(); i++) {
+//            s.setSpan(new ClickableSpan() {
+//                @Override
+//                public void onClick(View v) {
+//                }
+//
+//                @Override
+//                public void updateDrawState(TextPaint ds) {
+//                    super.updateDrawState(ds);
+//                    ds.setColor(0xff000000);       //设置文件颜色
+//                    ds.setUnderlineText(false);      //设置下划线
+//                }
+//            }, i, i + 1, Spanned.SPAN_EXCLUSIVE_INCLUSIVE);
+//        }
+//        subTitleView.setText(s, TextView.BufferType.SPANNABLE);
+//        subTitleView.setMovementMethod(LinkMovementMethod.getInstance());
+//        subTitleView.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                //若没有绑定clickableSpan，无法使用subSequence方法
+//                //若tv.getSelectionStart()-1,则输出点击的文字以及其上一个文字
+//                //若tv.getSelectionEnd()+1,则输出点击的文字以及其下一个文字，如此类推
+//                //通过标点判断还可截取一段文字中我们所点击的那句话
+//                TextView tv = (TextView) v;
+//                String s = tv
+//                        .getText()
+//                        .subSequence(tv.getSelectionStart(),
+//                                tv.getSelectionEnd()).toString();
+//                Log.d("tapped on:", s);
+//            }
+//        });
+//    }
+//
+//    private View.OnClickListener onSubtitleClick = new View.OnClickListener() {
+//        @Override
+//        public void onClick(View view) {
+//            Log.d(TAG, "onSubtitleClick");
+//        }
+//
+//    };
+//    private View.OnLongClickListener onSubtitleLongClick = new View.OnLongClickListener() {
+//        @Override
+//        public boolean onLongClick(View view) {
+//            Log.d(TAG, "onSubtitleLongClick");
+//            return false;
+//        }
+//
+//    };
+
+    private Runnable mHideFloat = new Runnable() {
+        @Override
+        public void run() {
+            EasyFloat.hide(FLOAT_SUBTITLE);
+        }
+    };
+
+    private ResultCallback<SubtitleList> subtitleListCallback = new ResultCallback<SubtitleList>(true) {
 
         @Override
         public void onError(Request request, Exception e) {
             subtitleList = null;
             playerTimeJs = null;
+            Log.d(TAG, "get subtitle error");
         }
 
         @Override
         public void onResponse(SubtitleList response) {
             if (response != null) {
                 subtitleList = response;
+                Log.d(TAG, "get subtitle:" + Thread.currentThread().getName() + Integer.toString(subtitleList.body.size()));
+                EasyFloat.show(FLOAT_SUBTITLE);
                 for (Subtitle s : subtitleList.body) {
-                    Log.d(TAG, s.getDetail());
+//                    Log.d(TAG, s.getDetail());
                 }
             }
         }
     };
-
-//    private ResultCallback<BiliVideo> biliVideoCallback = new ResultCallback<BiliVideo>() {
-//
-//        @Override
-//        public void onResponse(BiliVideo response) {
-//            if (response != null) {
-//                String enSubtitle = response.getSubtitle("en");
-//                if (!TextUtils.isEmpty(enSubtitle)) {
-//                    OkHttpUtils.getInstace().doGet(enSubtitle, subtitleListCallback);
-//                }
-//            }
-//
-//        }
-//    };
 
     private class InsideWebViewClient extends WebViewClient {
 
@@ -220,10 +324,14 @@ public class VideoActivity extends Activity {
         @Nullable
         @Override
         public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+//            Log.d(TAG, "shouldInterceptRequest:" + request.getUrl().toString());
             int subtitleType = SubtitleService.getSubtitleFromUrl(request.getUrl().toString(), subtitleListCallback);
             String js = SubtitleService.getPlayTimeJS(subtitleType);
             if (!TextUtils.isEmpty(js)) {
                 playerTimeJs = js;
+                Log.d(TAG, Thread.currentThread().getName() + " HIDE...");
+                jsHandler.post(mHideFloat);
+//                EasyFloat.hide(FLOAT_SUBTITLE);
             }
             return super.shouldInterceptRequest(view, request);
         }
@@ -270,56 +378,5 @@ public class VideoActivity extends Activity {
         super.onResume();
 //        getClipboardData();
         jsHandler.postDelayed(jsRun, 2000);
-    }
-
-
-    private void showAppFloat2() {
-        //EasyFloat.with(this)
-        //        .setTag(TAG)
-        //        .setLayout(R.layout.float_custom, view ->
-        //                view.findViewById(R.id.textView).setOnClickListener(v1 -> toast("onClick")))
-        //        .setGravity(Gravity.END, 0, 100)
-        //        // 在Java中使用Kotlin DSL回调
-        //        .registerCallback(builder -> {
-        //            builder.createResult((aBoolean, s, view) -> {
-        //                toast("createResult：" + aBoolean.toString());
-        //                return null;
-        //            });
-        //
-        //            builder.dismiss(() -> {
-        //                toast("dismiss");
-        //                return null;
-        //            });
-        //
-        //            // ...可根据需求复写其他方法
-        //
-        //            return null;
-        //        })
-        //        .show();
-        //EasyFloat.with(this.applicationContext)
-        //        .setTag(tag)
-        //        .setShowPattern(ShowPattern.FOREGROUND)
-        //        .setLocation(100, 100)
-        //        .setAnimator(null)
-        //        .setFilter(SecondActivity::class.java)
-        //    .setLayout(R.layout.float_app_scale) {
-        //    val content = it.findViewById<RelativeLayout>(R.id.rlContent)
-        //            val params = content.layoutParams as FrameLayout.LayoutParams
-        //    it.findViewById<ScaleImage>(R.id.ivScale).onScaledListener =
-        //            object : ScaleImage.OnScaledListener {
-        //        override fun onScaled(x: Float, y: Float, event: MotionEvent) {
-        //            params.width = max(params.width + x.toInt(), 400)
-        //            params.height = max(params.height + y.toInt(), 300)
-        //            // 更新xml根布局的大小
-        //            //                            content.layoutParams = params
-        //            // 更新悬浮窗的大小，可以避免在其他应用横屏时，宽度受限
-        //            EasyFloat.updateFloat(tag, width = params.width, height = params.height)
-        //        }
-        //    }
-        //
-        //    it.findViewById<ImageView>(R.id.ivClose).setOnClickListener {
-        //        EasyFloat.dismiss(tag)
-        //    }
-        //}.show()
     }
 }
