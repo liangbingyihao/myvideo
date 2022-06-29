@@ -52,7 +52,7 @@ public class SubtitleService {
             });
             return TYPE_BILI;
         } else if (url.indexOf("/api/timedtext") > 0) {
-            OkHttpUtils.getInstace().doGet(url, new ResultCallback<JsonObject>(false) {
+            OkHttpUtils.getInstace().doGet(url, new ResultCallback<JsonObject>(true) {
                 @Override
                 public void onError(Request request, Exception e) {
                     callback.onError(null, null);

@@ -76,11 +76,19 @@ public class VideoActivity extends Activity {
             if (!isMatch) {
                 return;
             }
-            Message msg = Message.obtain();
-            msg.what = MSG_TIME;
-            msg.arg1 = Utils.timeStr2Seconds(s.replace("\"", ""));
-            subtitleHandler.removeMessages(MSG_TIME);
-            subtitleHandler.sendMessage(msg);
+            int second = Utils.timeStr2Seconds(s.replace("\"", ""));
+            if (subtitleList != null) {
+                String subtitle = subtitleList.getSubtitleFromSecond(second);
+                if (subtitle != null) {
+                    ClickWordHelper.setText(subTitleView, subtitle);
+                }
+            }
+
+//            Message msg = Message.obtain();
+//            msg.what = MSG_TIME;
+//            msg.arg1 = Utils.timeStr2Seconds(s.replace("\"", ""));
+//            subtitleHandler.removeMessages(MSG_TIME);
+//            subtitleHandler.sendMessage(msg);
         }
     };
 
@@ -97,7 +105,7 @@ public class VideoActivity extends Activity {
     Runnable subTitleRun = new Runnable() {
         @Override
         public void run() {
-            if(subTitle.size()>0){
+            if (subTitle.size() > 0) {
                 String all = String.join(" ", subTitle.subList(Math.max(0, subTitle.size() - 4), subTitle.size()));
                 ClickWordHelper.setText(subTitleView, all);
             }
@@ -164,8 +172,8 @@ public class VideoActivity extends Activity {
         webView.setWebViewClient(new InsideWebViewClient());
 
         // Navigate anywhere you want, but consider that this classes have only been tested on YouTube's mobile site
-        webView.loadUrl("https://www.bilibili.com/video/BV1cZ4y1W7rC");
-//        webView.loadUrl("https://m.youtube.com/watch?v=tZ2P0b-UT_I");
+//        webView.loadUrl("https://www.bilibili.com/video/BV1cZ4y1W7rC");
+        webView.loadUrl("https://m.youtube.com/watch?v=tZ2P0b-UT_I");
 //        webView.loadUrl("https://www.youtube.com/watch?v=r6sGWTCMz2k");
 //        webView.loadUrl("file:///android_asset/index.html");
 
@@ -181,7 +189,7 @@ public class VideoActivity extends Activity {
                             for (Subtitle s : subtitleList.body) {
                                 if (s.from < second && s.to > second) { // NEVER LOGGED on API 19-21
                                     jsHandler.removeCallbacks(subTitleRun);
-                                    if (subTitle.size()==0 || !s.content.equals(subTitle.get(subTitle.size()-1))) {
+                                    if (subTitle.size() == 0 || !s.content.equals(subTitle.get(subTitle.size() - 1))) {
 //                                        Log.d(TAG, String.format("set subtitle:%f,%f,%d,%s,", s.from, s.to, second, s.content));
                                         subTitle.add(s.content);
                                         jsHandler.post(subTitleRun);
@@ -258,9 +266,9 @@ public class VideoActivity extends Activity {
                 subtitleList = response;
                 Log.d(TAG, "get subtitle:" + Thread.currentThread().getName() + Integer.toString(subtitleList.body.size()));
                 EasyFloat.show(FLOAT_SUBTITLE);
-                for (Subtitle s : subtitleList.body) {
+//                for (Subtitle s : subtitleList.body) {
 //                    Log.d(TAG, s.getDetail());
-                }
+//                }
             }
         }
     };
@@ -275,6 +283,7 @@ public class VideoActivity extends Activity {
             int subtitleType = SubtitleService.getSubtitleFromUrl(request.getUrl().toString(), subtitleListCallback);
             String js = SubtitleService.getPlayTimeJS(subtitleType);
             if (!TextUtils.isEmpty(js)) {
+                Log.d(TAG, request.getUrl().toString());
                 playerTimeJs = js;
                 subTitle.clear();
                 Log.d(TAG, Thread.currentThread().getName() + " HIDE...");
