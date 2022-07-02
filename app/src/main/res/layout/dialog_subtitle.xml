@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <TextView
+        android:id="@+id/main_content"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:lineSpacingMultiplier="1.5"
+        android:textSize="18sp"
+        android:maxLines="5"
+        android:textIsSelectable="false"
+        android:text="Discover the latest features and updates that push boundaries of messaging, entertainment and accessibility, making your world even more connected."
+        android:textColor="@color/black" />
+
+</FrameLayout>

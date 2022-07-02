@@ -1,6 +1,7 @@
 package com.example.myvideo;
 
 import android.app.Activity;
+import android.content.res.Configuration;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -26,11 +27,13 @@ import android.webkit.WebViewClient;
 import android.widget.FrameLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 
+import com.example.myvideo.dialog.FragmentSubtitle;
 import com.example.myvideo.model.Subtitle;
 import com.example.myvideo.model.SubtitleList;
 import com.example.myvideo.utils.ResultCallback;
@@ -51,7 +54,7 @@ import java.util.regex.Pattern;
 
 import okhttp3.Request;
 
-public class VideoActivity extends Activity {
+public class VideoActivity extends Activity implements View.OnClickListener {
     private static final String TAG = "VideoActivity";
     private static final String FLOAT_SUBTITLE = "SUBTITLE";
     private VideoEnabledWebView webView;
@@ -65,6 +68,7 @@ public class VideoActivity extends Activity {
     private TextView subTitleView;
     private String videoJs;
     private String playerTimeJs = "";
+    private FragmentSubtitle subtitleDialog;
     private ValueCallback<String> mPlayerTime = new ValueCallback<String>() {
         @Override
         public void onReceiveValue(String s) {
@@ -137,6 +141,7 @@ public class VideoActivity extends Activity {
             @Override
             public void toggledFullscreen(boolean fullscreen) {
                 // Your code to handle the full-screen change, for example showing and hiding the title bar. Example:
+                Log.d(TAG,"fullscreen:"+fullscreen);
                 if (fullscreen) {
                     WindowManager.LayoutParams attrs = getWindow().getAttributes();
                     attrs.flags |= WindowManager.LayoutParams.FLAG_FULLSCREEN;
@@ -205,49 +210,54 @@ public class VideoActivity extends Activity {
             }
         };
         videoJs = Utils.getAssetsData(this, "video.js");
-        KtHelper.registerActivityFloat(this, FLOAT_SUBTITLE, new OnFloatCallbacks() {
-            @Override
-            public void touchEvent(@NonNull View view, @NonNull MotionEvent motionEvent) {
+//        KtHelper.registerActivityFloat(this, FLOAT_SUBTITLE, new OnFloatCallbacks() {
+//            @Override
+//            public void touchEvent(@NonNull View view, @NonNull MotionEvent motionEvent) {
+//
+//            }
+//
+//            @Override
+//            public void show(@NonNull View view) {
+//
+//            }
+//
+//            @Override
+//            public void hide(@NonNull View view) {
+//
+//            }
+//
+//            @Override
+//            public void dragEnd(@NonNull View view) {
+//
+//            }
+//
+//            @Override
+//            public void drag(@NonNull View view, @NonNull MotionEvent motionEvent) {
+//
+//            }
+//
+//            @Override
+//            public void dismiss() {
+//
+//            }
+//
+//            @Override
+//            public void createdResult(boolean b, @Nullable String s, @Nullable View view) {
+//                subTitleView = view.findViewById(R.id.main_content);
+//                EasyFloat.hide(FLOAT_SUBTITLE);
+//            }
+//        });
 
-            }
-
-            @Override
-            public void show(@NonNull View view) {
-
-            }
-
-            @Override
-            public void hide(@NonNull View view) {
-
-            }
-
-            @Override
-            public void dragEnd(@NonNull View view) {
-
-            }
-
-            @Override
-            public void drag(@NonNull View view, @NonNull MotionEvent motionEvent) {
-
-            }
-
-            @Override
-            public void dismiss() {
-
-            }
-
-            @Override
-            public void createdResult(boolean b, @Nullable String s, @Nullable View view) {
-                subTitleView = view.findViewById(R.id.main_content);
-                EasyFloat.hide(FLOAT_SUBTITLE);
-            }
-        });
+//        findViewById(R.id.main_menu).setOnClickListener(this);
+//        findViewById(R.id.subtitle).setOnClickListener(this);
+//        findViewById(R.id.video).setOnClickListener(this);
+//        findViewById(R.id.menu).setOnClickListener(this);
     }
 
     private Runnable mHideFloat = new Runnable() {
         @Override
         public void run() {
-            EasyFloat.hide(FLOAT_SUBTITLE);
+//            EasyFloat.hide(FLOAT_SUBTITLE);
         }
     };
 
@@ -265,13 +275,28 @@ public class VideoActivity extends Activity {
             if (response != null) {
                 subtitleList = response;
                 Log.d(TAG, "get subtitle:" + Thread.currentThread().getName() + Integer.toString(subtitleList.body.size()));
-                EasyFloat.show(FLOAT_SUBTITLE);
-//                for (Subtitle s : subtitleList.body) {
-//                    Log.d(TAG, s.getDetail());
-//                }
+//                EasyFloat.show(FLOAT_SUBTITLE);
             }
         }
     };
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()){
+//            case R.id.subtitle:
+//                Toast.makeText(this,"subtitle",Toast.LENGTH_SHORT).show();
+//                break;
+//            case R.id.video:
+//                Toast.makeText(this,"video",Toast.LENGTH_SHORT).show();
+//                break;
+//            case R.id.menu:
+//                Toast.makeText(this,"menu",Toast.LENGTH_SHORT).show();
+//                break;
+            default:
+                Toast.makeText(this,"default",Toast.LENGTH_SHORT).show();
+
+        }
+    }
 
     private class InsideWebViewClient extends WebViewClient {
 
