@@ -177,8 +177,8 @@ public class VideoActivity extends Activity implements View.OnClickListener {
         webView.setWebViewClient(new InsideWebViewClient());
 
         // Navigate anywhere you want, but consider that this classes have only been tested on YouTube's mobile site
-//        webView.loadUrl("https://www.bilibili.com/video/BV1cZ4y1W7rC");
-        webView.loadUrl("https://m.youtube.com/watch?v=tZ2P0b-UT_I");
+        webView.loadUrl("https://www.bilibili.com/video/BV1cZ4y1W7rC");
+//        webView.loadUrl("https://m.youtube.com/watch?v=tZ2P0b-UT_I");
 //        webView.loadUrl("https://www.youtube.com/watch?v=r6sGWTCMz2k");
 //        webView.loadUrl("file:///android_asset/index.html");
 
@@ -210,6 +210,7 @@ public class VideoActivity extends Activity implements View.OnClickListener {
             }
         };
         videoJs = Utils.getAssetsData(this, "video.js");
+        subTitleView = findViewById(R.id.main_content);
 //        KtHelper.registerActivityFloat(this, FLOAT_SUBTITLE, new OnFloatCallbacks() {
 //            @Override
 //            public void touchEvent(@NonNull View view, @NonNull MotionEvent motionEvent) {

@@ -3,6 +3,7 @@ package com.example.myvideo.utils;
 import android.content.Context;
 import android.graphics.Point;
 import android.os.Build;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
 import android.view.WindowManager;
@@ -12,15 +13,17 @@ import java.io.InputStream;
 
 public class Utils {
     public static Point getDisplaySize(Context context) {
-        WindowManager wm = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
-        Display display = wm.getDefaultDisplay();
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB_MR2) {
-            return new Point(display.getWidth(), display.getHeight());
-        } else {
-            Point outSize = new Point();
-            display.getSize(outSize);
-            return outSize;
+        DisplayMetrics dm = null;
+        try {
+            dm = new DisplayMetrics();
+            WindowManager localWindowManager =
+                    (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+            localWindowManager.getDefaultDisplay().getRealMetrics(dm);
+            return new Point(dm.widthPixels, dm.heightPixels);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
+        return new Point(400, 800);
     }
 
     public static int timeStr2Seconds(String timeStr) {
